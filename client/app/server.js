@@ -38,20 +38,18 @@ function emulateServerReturn(data, cb) {
 
 
 
+ export function postComment(feedItemId, author, contents, cb) {
+
+     sendXHR('POST', '/comment', {
+       userId: author,
+       contents: contents,
+       feedId: feedItemId
+     }, (xhr) => {
+       cb(JSON.parse(xhr.responseText))
+      });
+    }
 
 
-export function postComment(feedItemId, author, contents, cb) {
-  var feedItem = readDocument('feedItems', feedItemId);
-  feedItem.comments.push({
-    "author": author,
-    "contents": contents,
-    "postDate": new Date().getTime(),
-    "likeCounter": []
-  });
-  writeDocument('feedItems', feedItem);
-  // Return a resolved version of the feed item.
-  emulateServerReturn(getFeedItemSync(feedItemId), cb);
-}
 
 export function postStatusUpdate(user, location, contents, cb) {
   sendXHR('POST', '/feeditem', {
@@ -68,25 +66,17 @@ export function postStatusUpdate(user, location, contents, cb) {
 
 
 export function likeComment(feedItemId, commentIdx, userId, cb) {
-  var feedItem = readDocument('feedItems', feedItemId);
-  var comment = feedItem.comments[commentIdx];
-  comment.likeCounter.push(userId);
-  writeDocument('feedItems', feedItem);
-  comment.author = readDocument('users', comment.author);
-  emulateServerReturn(comment, cb);
+    sendXHR('PUT', '/feeditem/' + feedItemId + '/comment/' + commentIdx  + '/likelist/' + userId, undefined, (xhr) => {
+      cb(JSON.parse(xhr.responseText));
+    });
 }
 
 
 export function unlikeComment(feedItemId, commentIdx, userId, cb) {
-  var feedItem = readDocument('feedItems', feedItemId);
-  var comment = feedItem.comments[commentIdx];
-  var userIndex = comment.likeCounter.indexOf(userId);
-  if (userIndex !== -1) {
-    comment.likeCounter.splice(userIndex, 1);
-    writeDocument('feedItems', feedItem);
-  }
-  comment.author = readDocument('users', comment.author);
-  emulateServerReturn(comment, cb);
+    sendXHR('DELETE', '/feeditem/' + feedItemId + '/comment/' + commentIdx  + '/likelist/' + userId,
+    undefined, (xhr) => {
+      cb(JSON.parse(xhr.responseText));
+     });
 }
 
 
